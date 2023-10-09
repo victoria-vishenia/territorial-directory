@@ -1,4 +1,4 @@
-# territorial-directory
+# Territorial directory
 
 **Description**
 
