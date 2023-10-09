@@ -1,9 +1,7 @@
 package com.javarush.domain;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.Tables;
 
-import javax.persistence.criteria.CriteriaBuilder;
 import java.math.BigDecimal;
 import java.util.Set;
 
@@ -53,11 +51,10 @@ public class Country {
     private String headOfState;
 
     @OneToOne
-    @JoinColumn(name = "capial")
+    @JoinColumn(name = "capital")
     private City capital;
 
-    @OneToMany(fetch = FetchType.EAGER)
-    @Column(name = "country_id")
+    @OneToMany(mappedBy = "country", fetch = FetchType.EAGER)
     private Set<CountryLanguage> countryLanguageSet;
 
     public Integer getId() {

@@ -15,7 +15,6 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisStringCommands;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 
@@ -29,7 +28,7 @@ import static java.util.Objects.nonNull;
 
 public class Main {
     private final SessionFactory sessionFactory;
-  private final RedisClient redisClient ;
+    private final RedisClient redisClient ;
     private final ObjectMapper mapper;
     private final CityDAO cityDAO;
     private final CountryDAO countryDAO;
@@ -46,10 +45,10 @@ public class Main {
         final SessionFactory sessionFactory;
         Properties properties = new Properties();
         properties.put(Environment.DIALECT, "org.hibernate.dialect.MySQL8Dialect");
-        properties.put(Environment.DRIVER, "com.p6spy.engine.spy.P6SpyDriver");
-        properties.put(Environment.URL, "jdbc:p6spy:mysql://localhost:3306/world");
+        properties.put(Environment.DRIVER, "com.mysql.cj.jdbc.Driver");
+        properties.put(Environment.URL, "jdbc:mysql://localhost:3306/world");
         properties.put(Environment.USER, "root");
-        properties.put(Environment.PASS, "VictoriaSuccess3751737");
+        properties.put(Environment.PASS, "root");
         properties.put(Environment.CURRENT_SESSION_CONTEXT_CLASS, "thread");
         properties.put(Environment.HBM2DDL_AUTO, "validate");
         properties.put(Environment.STATEMENT_BATCH_SIZE, "100");
@@ -65,22 +64,23 @@ public class Main {
     }
 
     private List<City> fetchData(Main main) {
-        try (Session session = main.sessionFactory.getCurrentSession()){
-            List<City> cities = new ArrayList<>();
-           Transaction transaction= session.beginTransaction();
-           List<Country>countries =main.countryDAO.getCountries();
+        try (Session session = main.sessionFactory.getCurrentSession()) {
+            List<City> allCities = new ArrayList<>();
+            session.beginTransaction();
+
 
             int totalCount = main.cityDAO.getTotalCount();
             int step = 500;
-            for (int i=0; i < totalCount; i=+step) {
-                cities=main.cityDAO.getItems(i, step);
+            for (int i = 0; i < totalCount; i += step) {
+                allCities.addAll(main.cityDAO.getItems(i, step));
             }
-            transaction.commit();
-            return cities;
+            session.getTransaction().commit();
+            return allCities;
         }
     }
     private RedisClient prepareRedisClient() {
-        RedisClient redisClient = RedisClient.create(RedisURI.create("localhost", 6379));
+        RedisClient redisClient = RedisClient
+                .create(RedisURI.create("localhost", 6379));
         try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
             System.out.println("\nConnected to Redis\n");
         }
@@ -122,7 +122,8 @@ public class Main {
             RedisStringCommands<String, String> sync = connection.sync();
             for (CityCountry cityCountry : data) {
                 try {
-                    sync.set(String.valueOf(cityCountry.getId()), mapper.writeValueAsString(cityCountry));
+                    sync.set(String.valueOf(cityCountry.getId()),
+                            mapper.writeValueAsString(cityCountry));
                 } catch (JsonProcessingException e) {
                     e.printStackTrace();
                 }
@@ -169,11 +170,8 @@ public class Main {
         List<CityCountry> preparedData = main.transformData(allCities);
         main.pushToRedis(preparedData);
 
-        //закроем текущую сессию, чтоб точно делать запрос к БД, а не вытянуть данные из кэша
         main.sessionFactory.getCurrentSession().close();
 
-        //выбираем случайных 10 id городов
-        //так как мы не делали обработку невалидных ситуаций, используй существующие в БД id
         List<Integer> ids = List.of(3, 2545, 123, 4, 189, 89, 3458, 1189, 10, 102);
 
         long startRedis = System.currentTimeMillis();
@@ -188,6 +186,5 @@ public class Main {
         System.out.printf("%s:\t%d ms\n", "MySQL", (stopMysql - startMysql));
 
         main.shutdown();
-
     }
 }

@@ -1,9 +1,6 @@
 package com.javarush.domain;
 
-
 import jakarta.persistence.*;
-
-import javax.persistence.criteria.CriteriaBuilder;
 
 @Entity
 @Table(schema = "world", name = "city")
