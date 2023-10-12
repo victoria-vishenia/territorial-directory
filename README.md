@@ -1,4 +1,4 @@
-# territorial-directory
+# Territorial directory
 
 **Description**
 
@@ -19,10 +19,9 @@ MySQL:	158 ms
 The application is developed using Java Collections API, Java Stream API, Hibernate, MySQL, Redis, Docker.
 
 **User instruction**
-
-To access the database, use the file application.properties. 
-To configurate Session Factory for MySQL let's set up method prepareRelationalDb() in Main.class. 
-To configurate RedisClient use prepareRedisClient() method.
-To create schema in MySQL, import CityCountry dump file.
+ 
+To configurate Session Factory for MySQL let's set up method prepareRelationalDb() in Main.Class. 
+To configurate RedisClient use prepareRedisClient() method in Main.Class.
+To create schema in MySQL, import CityCountry.sql dump file.
 For set up MySQL and Redis you can use Docker.
 After starting the project, you could compare efficency of MySQL queries and commands in Redis.
